@@ -110,7 +110,7 @@ jobs:
           set(CMAKE_FIND_ROOT_PATH /opt/aarch64-openssl /opt/aarch64-curl)
           set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
           set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
           
           set(OPENSSL_ROOT_DIR /opt/aarch64-openssl)
           set(OPENSSL_INCLUDE_DIR /opt/aarch64-openssl/include)
@@ -120,6 +120,10 @@ jobs:
           set(CURL_ROOT /opt/aarch64-curl)
           set(CURL_INCLUDE_DIR /opt/aarch64-curl/include)
           set(CURL_LIBRARY /opt/aarch64-curl/lib/libcurl.a)
+          
+          # 添加头文件搜索路径
+          include_directories(/opt/aarch64-curl/include)
+          include_directories(/opt/aarch64-openssl/include)
           EOF
           
           echo "⚙️ CMake configuring"
@@ -127,6 +131,8 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=aarch64-toolchain.cmake \
             -DBUILD_STATIC=ON \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS="-I/opt/aarch64-curl/include -I/opt/aarch64-openssl/include" \
+            -DCMAKE_CXX_FLAGS="-I/opt/aarch64-curl/include -I/opt/aarch64-openssl/include" \
             .
           
           echo "🔨 Making Programme"
