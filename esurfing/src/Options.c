@@ -1,6 +1,8 @@
 //
 // Created by bad_g on 2025/9/27.
 //
+#include <stddef.h>
+
 char* usr;
 char* pwd;
 char* chn;
