@@ -56,6 +56,25 @@ size_t writeResponseCallback(const void *contents, size_t size, size_t nmemb, HT
  */
 NetResult* simPost(const char* url, const char* data);
 
+/**
+ * POST 函数 (带接口绑定)
+ * @param url 网址
+ * @param data 数据
+ * @param interface 绑定的网卡接口名或IP地址 (可为NULL)
+ * @return 网络返回值
+ */
+NetResult* simPostWithInterface(const char* url, const char* data, const char* interface);
+
+/**
+ * POST 函数 (完整版)
+ * @param url 网址
+ * @param data 数据
+ * @param extraHeaders 额外的HTTP头
+ * @param interface 绑定的网卡接口名或IP地址 (可为NULL)
+ * @return 网络返回值
+ */
+NetResult* postRequestWithInterface(const char* url, const char* data, ExtraHeaders* extraHeaders, const char* interface);
+
 #ifdef __cplusplus
 }
 #endif

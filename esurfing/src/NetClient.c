@@ -9,6 +9,7 @@
 #include "headFiles/NetClient.h"
 #include "headFiles/Constants.h"
 #include "headFiles/States.h"
+#include "headFiles/Options.h"
 
 size_t writeResponseCallback(const void *contents, const size_t size, const size_t nmemb, HTTPResponse *response)
 {
@@ -91,7 +92,7 @@ void freeNetResult(NetResult* result)
     }
 }
 
-NetResult* postRequest(const char* url, const char* data, ExtraHeaders* extraHeaders)
+NetResult* postRequestWithInterface(const char* url, const char* data, ExtraHeaders* extraHeaders, const char* interface)
 {
     NetResult* result = malloc(sizeof(NetResult));
     HTTPResponse response = {0};
@@ -119,6 +120,13 @@ NetResult* postRequest(const char* url, const char* data, ExtraHeaders* extraHea
     }
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+    
+    // 设置绑定接口
+    if (interface && strlen(interface) > 0)
+    {
+        curl_easy_setopt(curl, CURLOPT_INTERFACE, interface);
+    }
+    
     headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
     snprintf(headerBuffer, sizeof(headerBuffer), "User-Agent: %s", USER_AGENT);
     headers = curl_slist_append(headers, headerBuffer);
@@ -194,7 +202,17 @@ NetResult* postRequest(const char* url, const char* data, ExtraHeaders* extraHea
     return result;
 }
 
+NetResult* postRequest(const char* url, const char* data, ExtraHeaders* extraHeaders)
+{
+    return postRequestWithInterface(url, data, extraHeaders, bindInterface);
+}
+
 NetResult* simPost(const char* url, const char* data)
 {
-    return postRequest(url, data, NULL);
+    return postRequestWithInterface(url, data, NULL, bindInterface);
+}
+
+NetResult* simPostWithInterface(const char* url, const char* data, const char* interface)
+{
+    return postRequestWithInterface(url, data, NULL, interface);
 }

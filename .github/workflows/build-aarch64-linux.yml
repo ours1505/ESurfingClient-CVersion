@@ -1,0 +1,175 @@
+name: Build aarch64 Linux Binary
+
+# 配置工作流权限
+permissions:
+  actions: write
+  contents: read
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-aarch64-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install cross-compilation packages
+        run: |
+          # 安装交叉编译工具链和依赖
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu \
+            cmake \
+            wget \
+            upx-ucl \
+            binutils-aarch64-linux-gnu \
+            file \
+            qemu-user-static
+
+      - name: Build OpenSSL for aarch64
+        run: |
+          wget https://www.openssl.org/source/openssl-3.0.13.tar.gz
+          tar -xzf openssl-3.0.13.tar.gz
+          cd openssl-3.0.13
+          
+          ./Configure linux-aarch64 \
+            --cross-compile-prefix=aarch64-linux-gnu- \
+            --prefix=/opt/aarch64-openssl \
+            no-shared \
+            no-tests
+          
+          make -j$(nproc)
+          sudo make install_sw
+          cd ..
+
+      - name: Build libcurl for aarch64
+        run: |
+          wget https://curl.se/download/curl-8.8.0.tar.gz
+          tar -xzf curl-8.8.0.tar.gz
+          cd curl-8.8.0
+          
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=aarch64-linux-gnu-g++
+          export AR=aarch64-linux-gnu-ar
+          export RANLIB=aarch64-linux-gnu-ranlib
+          export PKG_CONFIG_PATH=/opt/aarch64-openssl/lib64/pkgconfig
+          
+          ./configure \
+            --host=aarch64-linux-gnu \
+            --disable-shared \
+            --enable-static \
+            --without-gssapi \
+            --without-libpsl \
+            --without-libssh2 \
+            --without-nghttp2 \
+            --without-brotli \
+            --without-zstd \
+            --without-libidn2 \
+            --without-ldap \
+            --without-ldaps \
+            --without-rtsp \
+            --without-dict \
+            --without-telnet \
+            --without-tftp \
+            --without-pop3 \
+            --without-imap \
+            --without-smb \
+            --without-smtp \
+            --without-gopher \
+            --without-mqtt \
+            --without-ftp \
+            --without-zlib \
+            --with-ssl=/opt/aarch64-openssl \
+            --prefix=/opt/aarch64-curl
+          
+          make -j$(nproc)
+          sudo make install
+          cd ..
+
+      - name: Build ESurfingClient
+        run: |
+          echo "🏗️ Starting aarch64 Linux build process"
+          echo "📁 Go to esurfing dir"
+          cd esurfing
+          
+          # 创建交叉编译 CMake 工具链文件
+          cat > aarch64-toolchain.cmake << 'EOF'
+          set(CMAKE_SYSTEM_NAME Linux)
+          set(CMAKE_SYSTEM_PROCESSOR aarch64)
+          
+          set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
+          set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
+          set(CMAKE_AR aarch64-linux-gnu-ar)
+          set(CMAKE_RANLIB aarch64-linux-gnu-ranlib)
+          set(CMAKE_STRIP aarch64-linux-gnu-strip)
+          
+          set(CMAKE_FIND_ROOT_PATH /opt/aarch64-openssl /opt/aarch64-curl)
+          set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+          set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+          
+          set(OPENSSL_ROOT_DIR /opt/aarch64-openssl)
+          set(OPENSSL_INCLUDE_DIR /opt/aarch64-openssl/include)
+          set(OPENSSL_SSL_LIBRARY /opt/aarch64-openssl/lib64/libssl.a)
+          set(OPENSSL_CRYPTO_LIBRARY /opt/aarch64-openssl/lib64/libcrypto.a)
+          
+          set(CURL_ROOT /opt/aarch64-curl)
+          set(CURL_INCLUDE_DIR /opt/aarch64-curl/include)
+          set(CURL_LIBRARY /opt/aarch64-curl/lib/libcurl.a)
+          EOF
+          
+          echo "⚙️ CMake configuring"
+          cmake \
+            -DCMAKE_TOOLCHAIN_FILE=aarch64-toolchain.cmake \
+            -DBUILD_STATIC=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            .
+          
+          echo "🔨 Making Programme"
+          make -j$(nproc)
+          
+          echo "📦 Moved ESurfingClient to root dir"
+          mv bin/ESurfingClient ../ESurfingClient-aarch64-linux
+          
+          echo "🛡️ Protect1 - Strip binary"
+          aarch64-linux-gnu-strip --strip-all ../ESurfingClient-aarch64-linux
+          
+          echo "📦 Protect2 - Compress with UPX"
+          upx --best ../ESurfingClient-aarch64-linux || echo "UPX compression failed, continuing..."
+          
+          echo "✅ Build completed successfully"
+
+      - name: Verify build output
+        run: |
+          echo "🔍 Verifying build output"
+          if [ -f "ESurfingClient-aarch64-linux" ]; then
+            echo "✅ Binary file exists"
+            ls -la ESurfingClient-aarch64-linux
+            file ESurfingClient-aarch64-linux
+            echo "📏 File size: $(du -h ESurfingClient-aarch64-linux | cut -f1)"
+          else
+            echo "❌ Binary file not found"
+            exit 1
+          fi
+
+      - name: Create package
+        run: |
+          echo "📦 Creating package"
+          
+          # Create compressed package with executable in root
+          tar -czf esurfingclient-aarch64-linux.tar.gz ESurfingClient-aarch64-linux
+          
+          echo "📦 Package created: esurfingclient-aarch64-linux.tar.gz"
+          ls -la esurfingclient-aarch64-linux.tar.gz
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: esurfingclient-aarch64-linux
+          path: |
+            ESurfingClient-aarch64-linux
+          retention-days: 30

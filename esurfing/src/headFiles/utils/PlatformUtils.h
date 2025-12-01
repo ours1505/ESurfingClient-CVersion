@@ -92,9 +92,4 @@ char* createXMLPayload(const char* choose);
  */
 char* cleanCDATA(const char* text);
 
-/**
- * OpenWrt 创建一键配置脚本
- */
-void createBash();
-
 #endif // PLATFORMUTILS_H

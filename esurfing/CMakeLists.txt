@@ -59,6 +59,10 @@ add_executable(ESurfingClient
         src/cipher/impl/aes_cbc_pc.c
         src/cipher/impl/mod_xtea_pc.c
         src/headFiles/cipher/impl/mod_xtea_pc.h
+        src/ConfigParser.c
+        src/headFiles/ConfigParser.h
+        src/MultiDialer.c
+        src/headFiles/MultiDialer.h
         src/cipher/impl/mod_xtea_cbc_triple_pc.c
         src/headFiles/cipher/impl/mod_xtea_cbc_triple_pc.h
         src/cipher/impl/des_ecb_six_pc.c
@@ -225,6 +229,7 @@ if(WIN32)
                 LibXml2::LibXml2
                 OpenSSL::SSL
                 OpenSSL::Crypto
+                pthread
                 ws2_32
                 wldap32
                 winmm

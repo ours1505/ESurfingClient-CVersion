@@ -15,14 +15,8 @@ on:
         default: 'all'
         options:
           - all
-          - 21.02.7-ramips-mt7621
-          - 21.02.7-x86-64
-          - 22.03.7-x86-64
-          - 23.05.0-ramips-mt7621
-          - 24.10.4-mediatek-filogic
-          - 24.10.4-ramips-mt7621
-          - 24.10.4-x86-64
           - x86_64-linux
+          - aarch64-linux
           - x86_64-windows
 
 jobs:
@@ -56,14 +50,8 @@ jobs:
           script: |
             const fs = require('fs');
             const workflows = [
-              { file: 'build-openwrt-21.02.7-ramips-mt7621.yml', platform: '21.02.7-ramips-mt7621' },
-              { file: 'build-openwrt-21.02.7-x86-64.yml', platform: '21.02.7-x86-64' },
-              { file: 'build-openwrt-22.03.7-x86-64.yml', platform: '22.03.7-x86-64' },
-              { file: 'build-openwrt-23.05.0-ramips-mt7621.yml', platform: '23.05.0-ramips-mt7621' },
-              { file: 'build-openwrt-24.10.4-mediatek-filogic.yml', platform: '24.10.4-mediatek-filogic' },
-              { file: 'build-openwrt-24.10.4-ramips-mt7621.yml', platform: '24.10.4-ramips-mt7621' },
-              { file: 'build-openwrt-24.10.4-x86-64.yml', platform: '24.10.4-x86-64' },
               { file: 'build-x86_64-linux.yml', platform: 'x86_64-linux' },
+              { file: 'build-aarch64-linux.yml', platform: 'aarch64-linux' },
               { file: 'build-x86_64-windows.yml', platform: 'x86_64-windows' }
             ];
             
